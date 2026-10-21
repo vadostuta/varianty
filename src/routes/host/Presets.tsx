@@ -152,7 +152,7 @@ function Editor({
   const [busy, setBusy] = useState(false);
   const missing = missingFields(p);
 
-  const update = (r: number, q: number, field: 'question' | 'correctAnswer', value: string) =>
+  const update = (r: number, q: number, field: 'question' | 'correctAnswer' | 'explanation', value: string) =>
     setP((prev) => {
       const next = structuredClone(prev);
       next.rounds[r][q][field] = value;
@@ -207,6 +207,14 @@ function Editor({
                   onChange={(v) => update(r, q, 'correctAnswer', v)}
                   error={touched && !item.correctAnswer.trim() ? uk.presets.needAnswer : ''}
                 />
+                <Field
+                  label={uk.presets.explanation}
+                  value={item.explanation ?? ''}
+                  placeholder={uk.presets.explanationPlaceholder}
+                  onChange={(v) => update(r, q, 'explanation', v)}
+                  className="md:col-span-2 md:col-start-2"
+                  multiline
+                />
               </li>
             ))}
           </ol>
@@ -242,6 +250,8 @@ function Field({
   error,
   placeholder,
   big = false,
+  multiline = false,
+  className = '',
 }: {
   label: string;
   value: string;
@@ -249,22 +259,25 @@ function Field({
   error?: string;
   placeholder?: string;
   big?: boolean;
+  multiline?: boolean;
+  className?: string;
 }) {
   const id = useId();
+  const props = {
+    id,
+    value,
+    placeholder,
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(e.target.value),
+    'aria-invalid': !!error,
+    'aria-describedby': error ? `${id}-err` : undefined,
+    className: `w-full rounded-host border-2 bg-velvet px-3.5 font-semibold text-cream outline-none placeholder:text-fog/60 focus:border-sun ${
+      error ? 'border-coral' : 'border-edge'
+    } ${big ? 'h-14 text-xl font-extrabold' : multiline ? 'min-h-20 py-2.5 text-[15px]' : 'h-12 text-[15px]'}`,
+  };
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className={`flex flex-col gap-1.5 ${className}`}>
       <Label htmlFor={id}>{label}</Label>
-      <input
-        id={id}
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${id}-err` : undefined}
-        className={`w-full rounded-host border-2 bg-velvet px-3.5 font-semibold text-cream outline-none placeholder:text-fog/60 focus:border-sun ${
-          error ? 'border-coral' : 'border-edge'
-        } ${big ? 'h-14 text-xl font-extrabold' : 'h-12 text-[15px]'}`}
-      />
+      {multiline ? <textarea rows={2} {...props} /> : <input {...props} />}
       {error && (
         <span id={`${id}-err`} className="flex items-center gap-1.5 text-[13px] font-bold text-coral">
           <WarnIcon size={14} /> {error}

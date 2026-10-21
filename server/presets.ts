@@ -29,7 +29,11 @@ export async function upsertPreset(input: Preset): Promise<Preset> {
     name: input.name.trim() || 'Без назви',
     updatedAt: Date.now(),
     rounds: input.rounds.map((r) =>
-      r.map((q) => ({ question: q.question.trim(), correctAnswer: q.correctAnswer.trim() })),
+      r.map((q) => ({
+        question: q.question.trim(),
+        correctAnswer: q.correctAnswer.trim(),
+        explanation: q.explanation?.trim() ?? '',
+      })),
     ),
   };
   const i = presets.findIndex((p) => p.id === preset.id);

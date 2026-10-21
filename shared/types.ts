@@ -32,6 +32,8 @@ export const DEFAULT_SETTINGS: Settings = {
 export interface PresetQuestion {
   question: string;
   correctAnswer: string;
+  /** optional; shown only to the host, for when players ask "why?" */
+  explanation?: string;
 }
 
 export interface Preset {
@@ -185,6 +187,7 @@ export interface View {
   host?: {
     presetId: string | null;
     correctAnswer: string | null;
+    explanation: string | null;
     answers: { playerId: string; text: string }[];
     /** what the next "Далі" press reveals in RESULTS */
     nextStep: ResultStep | null;

@@ -114,6 +114,16 @@ function QuestionPanel({ view }: { view: View }) {
             {uk.host.correctAnswer} · {uk.host.hostOnly}
           </span>
           <span className="text-lg font-extrabold">{view.host?.correctAnswer}</span>
+          {view.host?.explanation && (
+            <div className="mt-2 flex flex-col gap-0.5 border-t border-sun/30 pt-2">
+              <span className="text-xs font-extrabold tracking-[0.1em] text-sun uppercase">
+                {uk.host.explanation}
+              </span>
+              <p className="text-[15px] leading-snug font-semibold whitespace-pre-line text-cream/90">
+                {view.host.explanation}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </Panel>

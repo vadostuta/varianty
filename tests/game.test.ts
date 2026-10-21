@@ -141,6 +141,15 @@ describe('privacy', () => {
     expect(JSON.stringify(screen)).not.toContain('"t0"');
   });
 
+  it('shows the explanation to the host only', () => {
+    const g = playToVoting();
+    g.state.questions[0][0].explanation = 'Бо так';
+    const opts = { now: g.now, joinUrl: '' };
+    expect(buildView(g.state, 'host', opts).host?.explanation).toBe('Бо так');
+    expect(JSON.stringify(buildView(g.state, 'screen', opts))).not.toContain('Бо так');
+    expect(JSON.stringify(buildView(g.state, 'player', { ...opts, playerId: 'p0' }))).not.toContain('Бо так');
+  });
+
   it('reveals a card only after its step', () => {
     const g = playToVoting();
     g.act({ type: 'vote', playerId: 'p1', cardId: g.cardOf('p0') });

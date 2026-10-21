@@ -26,7 +26,11 @@ export function emptyPreset(): Preset {
     name: '',
     updatedAt: 0,
     rounds: Array.from({ length: ROUNDS }, () =>
-      Array.from({ length: QUESTIONS_PER_ROUND }, () => ({ question: '', correctAnswer: '' })),
+      Array.from({ length: QUESTIONS_PER_ROUND }, () => ({
+        question: '',
+        correctAnswer: '',
+        explanation: '',
+      })),
     ),
   };
 }
