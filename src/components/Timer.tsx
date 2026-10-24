@@ -6,7 +6,7 @@ import { PauseIcon } from './icons.tsx';
 const R = 44;
 const C = 2 * Math.PI * R;
 
-/** Big ring timer: cream ring melts clockwise; coral + pulse ≤10 s; dashed when paused; sun when done. */
+/** Big ring timer: the ring (cream; pumpkin at Halloween) melts clockwise; coral + pulse ≤10 s; dashed when paused; sun when done. */
 export function TimerRing({ timer, size = 200 }: { timer: TimerState | null; size?: number }) {
   const cd = useCountdown(timer);
   if (!cd) return null;
@@ -45,13 +45,20 @@ export function TimerRing({ timer, size = 200 }: { timer: TimerState | null; siz
           />
         ) : (
           <>
-            <circle cx="50" cy="50" r={R} fill="none" stroke="var(--color-edge)" strokeWidth="8" />
+            <circle
+              cx="50"
+              cy="50"
+              r={R}
+              fill="var(--color-night)"
+              stroke="var(--color-edge)"
+              strokeWidth="8"
+            />
             <circle
               cx="50"
               cy="50"
               r={R}
               fill="none"
-              stroke={cd.urgent ? 'var(--color-coral)' : 'var(--color-cream)'}
+              stroke={cd.urgent ? 'var(--color-coral)' : 'var(--color-timer)'}
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={C}
@@ -67,7 +74,7 @@ export function TimerRing({ timer, size = 200 }: { timer: TimerState | null; siz
         className="absolute inset-0 flex flex-col items-center justify-center font-display font-extrabold tabular"
       >
         {cd.done ? (
-          <span className="font-black text-ink" style={{ fontSize: font * 1.05 }}>
+          <span className="font-logo font-black text-ink" style={{ fontSize: font * 1.05 }}>
             {uk.timer.up}
           </span>
         ) : cd.paused ? (
@@ -103,7 +110,7 @@ export function TimerPill({ timer, large = false }: { timer: TimerState | null; 
     return (
       <span
         role="timer"
-        className={`inline-flex items-center rounded-full bg-sun px-[18px] font-display font-extrabold text-ink ${h}`}
+        className={`inline-flex items-center rounded-full bg-sun px-[18px] font-logo font-extrabold text-ink ${h}`}
       >
         {uk.timer.up}
       </span>
@@ -135,7 +142,7 @@ export function TimerPill({ timer, large = false }: { timer: TimerState | null; 
           cy="50"
           r="40"
           fill="none"
-          stroke={cd.urgent ? 'rgba(26,18,6,.25)' : 'var(--color-edge)'}
+          stroke={cd.urgent ? 'color-mix(in srgb, var(--color-ink) 25%, transparent)' : 'var(--color-edge)'}
           strokeWidth="16"
         />
         <circle
@@ -143,7 +150,7 @@ export function TimerPill({ timer, large = false }: { timer: TimerState | null; 
           cy="50"
           r="40"
           fill="none"
-          stroke={cd.urgent ? 'var(--color-ink)' : 'var(--color-cream)'}
+          stroke={cd.urgent ? 'var(--color-ink)' : 'var(--color-timer)'}
           strokeWidth="16"
           strokeDasharray={2 * Math.PI * 40}
           strokeDashoffset={2 * Math.PI * 40 * (1 - cd.fraction)}

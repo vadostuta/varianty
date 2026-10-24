@@ -7,6 +7,8 @@ import { ScoreTable } from '../../components/ScoreTable.tsx';
 import { TimerPill } from '../../components/Timer.tsx';
 import { AnswerInput, Centered, Label, Logo, StatusToast } from '../../components/misc.tsx';
 import { CheckIcon, OfflineIcon, PencilIcon } from '../../components/icons.tsx';
+import { PhoneDecor, TruthSeal } from '../../components/decor.tsx';
+import { avatarLook, useTheme } from '../../lib/theme.ts';
 import { points, signed, uk } from '../../i18n/uk.ts';
 import { getSocket, request } from '../../lib/socket.ts';
 import { useConnected, useGameView } from '../../lib/useGame.ts';
@@ -71,7 +73,7 @@ export function Play() {
         <span className="font-emoji text-6xl" aria-hidden="true">
           {status === 'kicked' ? '👋' : '🛑'}
         </span>
-        <h1 className="font-display text-[28px] font-bold">
+        <h1 className="font-logo text-[28px] font-bold">
           {status === 'kicked' ? uk.play.kicked : uk.play.aborted}
         </h1>
         <Button onClick={() => setStatus('join')}>{uk.play.rejoin}</Button>
@@ -113,6 +115,7 @@ function Join({ onJoined }: { onJoined: () => void }) {
   const [avatar, setAvatar] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const theme = useTheme();
 
   useEffect(() => {
     const socket = getSocket();
@@ -140,7 +143,8 @@ function Join({ onJoined }: { onJoined: () => void }) {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-8 px-5 pt-14 pb-8">
+    <main className="relative isolate mx-auto flex min-h-dvh w-full max-w-md flex-col gap-8 px-5 pt-14 pb-8">
+      <PhoneDecor />
       <div className="flex flex-col items-center gap-3 text-center">
         <Logo size={56} />
         <p className="font-bold text-fog">{uk.tagline}</p>
@@ -156,7 +160,7 @@ function Join({ onJoined }: { onJoined: () => void }) {
             enterKeyHint="go"
             onChange={(e) => setName(e.target.value)}
             placeholder={uk.play.namePlaceholder}
-            className="h-14 rounded-phone border-2 border-edge bg-velvet px-4 text-xl font-extrabold text-cream outline-none placeholder:font-bold placeholder:text-fog/70 focus:border-sun focus:shadow-[0_0_0_4px_rgba(255,200,61,.2)]"
+            className="h-14 rounded-phone border-2 border-edge bg-velvet px-4 text-xl font-extrabold text-cream outline-none placeholder:font-bold placeholder:text-fog/70 focus:border-sun focus:shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-sun)_20%,transparent)]"
           />
         </div>
         <fieldset className="flex flex-col gap-3">
@@ -164,7 +168,8 @@ function Join({ onJoined }: { onJoined: () => void }) {
             {uk.play.avatarLabel}
           </legend>
           <div className="grid grid-cols-5 gap-3">
-            {AVATARS.map((a, i) => {
+            {AVATARS.map((_, i) => {
+              const a = avatarLook(i, theme);
               const taken = !free.includes(i);
               const on = chosen === i;
               return (
@@ -173,7 +178,7 @@ function Join({ onJoined }: { onJoined: () => void }) {
                   type="button"
                   disabled={taken}
                   aria-pressed={on}
-                  aria-label={`${a.emoji} ${a.colorName}${taken ? ', зайнято' : ''}`}
+                  aria-label={`${a.emoji} ${a.label}${taken ? ', зайнято' : ''}`}
                   onClick={() => setAvatar(on ? null : i)}
                   className={`relative flex aspect-square items-center justify-center rounded-full transition ${
                     on ? 'scale-105 shadow-[0_0_0_4px_var(--color-night),0_0_0_7px_var(--color-sun)]' : ''
@@ -215,15 +220,19 @@ function Shell({
   me,
   children,
   timer = false,
+  bat = false,
 }: {
   view: View;
   me: PublicPlayer;
   children: ReactNode;
   timer?: boolean;
+  /** Halloween decor: a bat under the header */
+  bat?: boolean;
 }) {
   const inGame = !['IDLE', 'LOBBY'].includes(view.phase);
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-5 px-4 pt-4 pb-8 sm:px-6">
+    <main className="relative isolate mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-5 px-4 pt-4 pb-8 sm:px-6">
+      <PhoneDecor bat={bat} />
       <header className="flex items-center gap-3">
         <PlayerChip player={me} />
         <span className="ml-auto flex items-center gap-2">
@@ -268,7 +277,7 @@ function PlayerGame({ view }: { view: View }) {
             <span className="animate-pop font-emoji text-7xl" aria-hidden="true">
               📺
             </span>
-            <h1 className="font-display text-[28px] font-bold">{uk.play.lookAtScreen}</h1>
+            <h1 className="font-logo text-[28px] font-bold">{uk.play.lookAtScreen}</h1>
             <p className="text-fog">{uk.play.lookHint}</p>
           </Centered>
         </Shell>
@@ -288,7 +297,7 @@ function Lobby({ view, me }: { view: View; me: PublicPlayer }) {
     <Shell view={view} me={me}>
       <section className="flex flex-col items-center gap-4 py-6 text-center">
         <Avatar avatar={me.avatar} size={112} className="animate-pop shadow-[0_8px_0_rgba(0,0,0,.35)]" />
-        <h1 className="font-display text-[28px] font-bold">{uk.play.youAre}</h1>
+        <h1 className="font-logo text-[28px] font-bold">{uk.play.youAre}</h1>
         <p className="flex items-center gap-2 text-fog">
           <span className="flex gap-1" aria-hidden="true">
             {[0, 0.2, 0.4].map((d) => (
@@ -408,7 +417,7 @@ function Reveal({ view, me }: { view: View; me: PublicPlayer }) {
   return (
     <Shell view={view} me={me}>
       <div className="flex flex-col gap-1">
-        <h1 className="font-display text-[28px] font-bold">{uk.play.discuss}</h1>
+        <h1 className="font-logo text-[28px] font-bold">{uk.play.discuss}</h1>
         <p className="text-fog">{uk.play.discussHint}</p>
       </div>
       <p className="text-lg leading-snug font-extrabold">{view.question}</p>
@@ -446,9 +455,9 @@ function Vote({ view, me }: { view: View; me: PublicPlayer }) {
   }
 
   return (
-    <Shell view={view} me={me} timer>
+    <Shell view={view} me={me} timer bat>
       <div className="flex flex-col gap-1">
-        <h1 className="font-display text-[28px] font-bold">{uk.play.vote}</h1>
+        <h1 className="font-logo text-[28px] font-bold">{uk.play.vote}</h1>
         <p className="text-fog">{uk.play.voteHint}</p>
       </div>
       <p className="text-lg leading-snug font-extrabold">{view.question}</p>
@@ -501,13 +510,13 @@ function MyResult({ view, me }: { view: View; me: PublicPlayer }) {
 
       <ul className="flex flex-col gap-3">
         <li
-          className={`flex items-center gap-3.5 rounded-phone px-4 py-4 ${r?.guessedCorrect ? 'bg-sun text-ink' : 'bg-dusk'}`}
+          className={`flex items-center gap-3.5 rounded-phone px-4 py-4 ${r?.guessedCorrect ? 'bg-truth text-on-truth' : 'bg-dusk'}`}
         >
           <span
             aria-hidden="true"
-            className={`flex size-10 flex-none items-center justify-center rounded-full font-emoji text-xl ${r?.guessedCorrect ? 'bg-ink text-sun' : 'bg-edge'}`}
+            className={`flex size-10 flex-none items-center justify-center rounded-full font-emoji text-xl ${r?.guessedCorrect ? 'bg-on-truth text-truth' : 'bg-edge'}`}
           >
-            {r?.guessedCorrect ? <CheckIcon size={20} /> : r?.voted ? '🙈' : '🤐'}
+            {r?.guessedCorrect ? <TruthSeal size={20} /> : r?.voted ? '🙈' : '🤐'}
           </span>
           <span className="flex-1 text-lg font-extrabold">
             {r?.guessedCorrect ? uk.play.guessedTitle : r?.voted ? uk.play.missed : uk.play.noVote}
@@ -577,7 +586,7 @@ function Final({ view, me }: { view: View; me: PublicPlayer }) {
         <span className="animate-pop font-emoji text-7xl" aria-hidden="true">
           {medal ?? '🎉'}
         </span>
-        <h1 className="font-display text-[32px] font-extrabold">{uk.play.place(rank)}</h1>
+        <h1 className="font-logo text-[32px] font-extrabold">{uk.play.place(rank)}</h1>
         <p className="font-display text-xl font-bold text-sun">{points(me.score)}</p>
       </section>
       <ul className="flex flex-col gap-2.5">

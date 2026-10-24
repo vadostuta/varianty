@@ -44,6 +44,21 @@ export interface Preset {
   rounds: PresetQuestion[][];
 }
 
+export type Theme = 'base' | 'halloween';
+/** What the host picked; 'auto' follows the calendar. */
+export type ThemeChoice = Theme | 'auto';
+
+/** Halloween runs from 15 October to 3 November (local time), inclusive. */
+export function seasonalTheme(date: Date): Theme {
+  const m = date.getMonth();
+  const d = date.getDate();
+  return (m === 9 && d >= 15) || (m === 10 && d <= 3) ? 'halloween' : 'base';
+}
+
+export function resolveTheme(choice: ThemeChoice, date: Date): Theme {
+  return choice === 'auto' ? seasonalTheme(date) : choice;
+}
+
 /** Player colour + avatar slot; index into AVATARS. */
 export interface Avatar {
   emoji: string;
@@ -133,6 +148,8 @@ export interface GameState {
   seq: number;
   /** random per question; keeps the card order unpredictable */
   shuffleSeed: number;
+  /** survives new games and cancels; every screen follows it */
+  theme: ThemeChoice;
 }
 
 // ───────────── Views sent to clients ─────────────

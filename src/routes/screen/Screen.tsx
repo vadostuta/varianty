@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import type { PublicPlayer, View, ViewCard } from '../../../shared/types.ts';
 import { Avatar, PlayerChip } from '../../components/Avatar.tsx';
 import { AnswerCard } from '../../components/AnswerCard.tsx';
@@ -6,9 +6,14 @@ import { rankPlayers, ScoreTable } from '../../components/ScoreTable.tsx';
 import { TimerRing } from '../../components/Timer.tsx';
 import { Logo, Progress, QRBlock } from '../../components/misc.tsx';
 import { OfflineIcon, PauseIcon } from '../../components/icons.tsx';
+import { CANDY_COLORS, Candy, CandyBag, Ghost, Pumpkin, Spooky, TvDecor } from '../../components/decor.tsx';
+import { useTheme } from '../../lib/theme.ts';
 import { points, uk } from '../../i18n/uk.ts';
 import { useConnected, useGameView, useRole } from '../../lib/useGame.ts';
 import { Results } from './Results.tsx';
+import { Vinyl } from '../../components/Vinyl.tsx';
+import { useMusic } from '../../lib/music.ts';
+import { useScreenMusic } from '../../lib/screenMusic.ts';
 
 const W = 1920;
 const H = 1080;
@@ -45,14 +50,34 @@ export function Screen() {
 
   return (
     <Stage>
+      <TvDecor view={view} />
       {view ? <Phase view={view} /> : <Splash />}
       {view?.timer?.pausedRemainingMs != null && <PausedOverlay />}
+      <MusicBadge />
       {!connected && (
         <div className="absolute top-8 right-8 flex items-center gap-3 rounded-full border-2 border-dashed border-fog bg-dusk px-6 py-3 text-2xl font-extrabold text-fog">
           <OfflineIcon size={28} /> {uk.play.reconnecting}
         </div>
       )}
     </Stage>
+  );
+}
+
+/** The TV plays the host's music; a record in the corner spins while it does. */
+function MusicBadge() {
+  const status = useScreenMusic();
+  const music = useMusic();
+  if (!music?.on) return null;
+  const blocked = status === 'blocked';
+  return (
+    <div className="absolute right-8 bottom-4 z-50 flex animate-fade items-center gap-5">
+      {blocked && (
+        <span className="animate-pulse-timer rounded-full bg-sun px-7 py-3 text-[26px] font-extrabold text-ink shadow-[0_6px_0_var(--color-sun-shade)]">
+          {uk.music.tapToPlay}
+        </span>
+      )}
+      <Vinyl size={72} playing={status === 'playing'} className={status === 'playing' ? '' : 'opacity-60'} />
+    </div>
   );
 }
 
@@ -113,9 +138,11 @@ function Lobby({ view }: { view: View }) {
           </span>
           {view.players.length ? (
             <ul className="flex flex-wrap gap-5">
-              {view.players.map((p) => (
+              {view.players.map((p, i) => (
                 <li key={p.id} className="animate-pop">
-                  <PlayerChip player={p} size="xl" />
+                  <span className="lobby-float block" style={{ animationDelay: `${(i % 5) * 0.3}s` }}>
+                    <PlayerChip player={p} size="xl" />
+                  </span>
                 </li>
               ))}
             </ul>
@@ -129,9 +156,12 @@ function Lobby({ view }: { view: View }) {
           </p>
         )}
       </div>
-      <div className="flex flex-col items-center justify-center gap-8 rounded-tv bg-dusk p-12">
+      <div className="relative flex flex-col items-center justify-center gap-8 rounded-tv bg-dusk p-12">
         <span className="font-display text-[44px] font-extrabold">{uk.screen.joinHere}</span>
         <QRBlock url={view.joinUrl} size={460} vertical big />
+        <Spooky>
+          <Pumpkin width={128} className="absolute top-[560px] left-[24px] -rotate-12" />
+        </Spooky>
       </div>
     </div>
   );
@@ -160,7 +190,16 @@ function Writing({ view }: { view: View }) {
         <h1 className="animate-rise font-display text-[72px] leading-[1.18] font-semibold text-balance">
           {view.question}
         </h1>
-        <TimerRing timer={view.timer} size={380} />
+        <div className="relative isolate">
+          <Spooky>
+            <Ghost
+              width={150}
+              className="absolute -right-[70px] -bottom-[40px] -z-10"
+              style={{ animation: 'vpeek 3.4s ease-in-out infinite' }}
+            />
+          </Spooky>
+          <TimerRing timer={view.timer} size={380} />
+        </div>
       </div>
       <StatusRow players={view.players} field="answered" label={uk.answered} doneLabel="є відповідь" />
     </TvFrame>
@@ -266,7 +305,12 @@ function Scoreboard({ view }: { view: View }) {
   return (
     <TvFrame
       view={view}
-      right={<h1 className="font-display text-[88px] leading-none font-extrabold">{uk.screen.scoreboard}</h1>}
+      right={
+        <h1 className="flex items-center gap-7 font-logo text-[88px] leading-none font-extrabold">
+          <CandyBag />
+          {uk.screen.scoreboard}
+        </h1>
+      }
     >
       <div className="mx-auto w-full max-w-[1400px]">
         <ScoreTable players={view.players} deltas={view.deltas} scale="tv" />
@@ -281,7 +325,7 @@ function RoundEnd({ view }: { view: View }) {
   return (
     <div className="flex h-full flex-col gap-12 px-24 py-16">
       <header className="flex items-end justify-between">
-        <h1 className="animate-pop font-display text-[88px] leading-none font-extrabold">
+        <h1 className="animate-pop font-logo text-[88px] leading-none font-extrabold">
           {uk.screen.roundOver(view.round)}
         </h1>
         <span className="rounded-full border-4 border-dashed border-sun px-10 py-4 font-display text-[40px] font-bold text-sun">
@@ -311,7 +355,7 @@ function GameEnd({ view }: { view: View }) {
       <Confetti />
       <header className="relative flex items-center justify-between">
         <Logo size={96} />
-        <h1 className="font-display text-[88px] leading-none font-extrabold">{uk.screen.gameOver}</h1>
+        <h1 className="font-logo text-[88px] leading-none font-extrabold">{uk.screen.gameOver}</h1>
       </header>
       <div className="relative mt-6 grid flex-1 grid-cols-[minmax(0,1fr)_560px] gap-16">
         <div className="flex items-end justify-center gap-8">
@@ -391,6 +435,7 @@ function topBy(players: PublicPlayer[], key: 'timesFooledOthers' | 'correctGuess
 }
 
 function Confetti() {
+  const candies = useTheme() === 'halloween';
   const pieces = useMemo(
     () =>
       Array.from({ length: 90 }, (_, i) => ({
@@ -398,6 +443,7 @@ function Confetti() {
         delay: Math.random() * 4,
         dur: 4 + Math.random() * 4,
         color: ['#FF8A3D', '#5AB0FF', '#9BE15D', '#B48CFF', '#FF6FB5', '#3DD6D0', '#FFC83D'][i % 7],
+        candy: CANDY_COLORS[i % CANDY_COLORS.length],
         w: 10 + Math.random() * 14,
         rot: Math.random() * 360,
       })),
@@ -409,21 +455,41 @@ function Confetti() {
       className="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
     >
       <style>{`@keyframes vfall{from{transform:translateY(-60px) rotate(0)}to{transform:translateY(1160px) rotate(720deg)}}`}</style>
-      {pieces.map((p, i) => (
-        <span
-          key={i}
-          className="absolute top-0 rounded-[3px]"
-          style={{
-            left: `${p.left}%`,
-            width: p.w,
-            height: p.w * 0.45,
-            background: p.color,
-            transform: `rotate(${p.rot}deg)`,
-            animation: `vfall ${p.dur}s linear ${p.delay}s infinite`,
-            opacity: 0.9,
-          }}
-        />
-      ))}
+      {pieces.map((p, i) =>
+        candies ? (
+          // fewer, bigger pieces: a candy shower rather than confetti
+          i % 2 === 0 && (
+            <Candy
+              key={i}
+              width={p.w * 2.6}
+              color={p.candy[0]}
+              dark={p.candy[1]}
+              className="absolute top-0"
+              style={
+                {
+                  left: `${p.left}%`,
+                  animation: `vcandy ${p.dur * 1.2}s linear ${p.delay}s infinite`,
+                  transform: `rotate(${p.rot}deg)`,
+                } as CSSProperties
+              }
+            />
+          )
+        ) : (
+          <span
+            key={i}
+            className="absolute top-0 rounded-[3px]"
+            style={{
+              left: `${p.left}%`,
+              width: p.w,
+              height: p.w * 0.45,
+              background: p.color,
+              transform: `rotate(${p.rot}deg)`,
+              animation: `vfall ${p.dur}s linear ${p.delay}s infinite`,
+              opacity: 0.9,
+            }}
+          />
+        ),
+      )}
     </div>
   );
 }
@@ -436,7 +502,8 @@ function PausedOverlay() {
       <span className="flex size-[220px] items-center justify-center rounded-full border-[6px] border-dashed border-fog text-fog">
         <PauseIcon size={110} />
       </span>
-      <span className="font-display text-[120px] leading-none font-extrabold">{uk.screen.paused}</span>
+      <span className="font-logo text-[120px] leading-none font-extrabold">{uk.screen.paused}</span>
+      {uk.screen.pausedHint && <span className="text-[40px] font-bold text-fog">{uk.screen.pausedHint}</span>}
     </div>
   );
 }

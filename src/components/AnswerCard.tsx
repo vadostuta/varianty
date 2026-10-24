@@ -2,6 +2,7 @@ import { AVATARS, type PublicPlayer, type ViewCard } from '../../shared/types.ts
 import { uk } from '../i18n/uk.ts';
 import { Avatar, VoteStack } from './Avatar.tsx';
 import { CheckIcon } from './icons.tsx';
+import { PointsIcon, TruthSeal } from './decor.tsx';
 
 export type CardScale = 'phone' | 'tv';
 
@@ -39,10 +40,10 @@ function Letter({
 }: {
   letter: string;
   scale: CardScale;
-  tone: 'plain' | 'sun' | 'ink';
+  tone: 'plain' | 'sun' | 'truth';
 }) {
   const color =
-    tone === 'sun' ? 'bg-sun text-ink' : tone === 'ink' ? 'bg-ink text-sun' : 'bg-edge text-cream';
+    tone === 'sun' ? 'bg-sun text-ink' : tone === 'truth' ? 'bg-on-truth text-truth' : 'bg-edge text-cream';
   return (
     <span
       aria-hidden="true"
@@ -94,7 +95,7 @@ export function AnswerCard({
         voterIds={voters}
         players={players}
         size={s.vote}
-        ring={card.authorId === null ? 'var(--color-sun)' : 'var(--color-velvet)'}
+        ring={card.authorId === null ? 'var(--color-truth)' : 'var(--color-velvet)'}
         animate={animateVotes}
       />
     ) : card.revealed ? (
@@ -108,24 +109,25 @@ export function AnswerCard({
 
   // revealed: correct
   if (card.authorId === null) {
+    const drop = `${s.shadow} var(--color-truth-shade)`;
     return (
       <div
-        className={`overflow-hidden bg-sun text-ink ${s.radius} ${ring}`}
-        style={{ boxShadow: `${s.shadow} var(--color-sun-shade)` }}
+        className={`truth-glow overflow-hidden bg-truth text-on-truth ${s.radius} ${ring}`}
+        style={{ boxShadow: drop, '--drop': drop } as React.CSSProperties}
       >
-        <div className={`flex items-center gap-2 border-b-2 border-ink/15 font-extrabold ${s.head}`}>
+        <div className={`flex items-center gap-2 border-b-2 border-on-truth/15 font-extrabold ${s.head}`}>
           <span
             aria-hidden="true"
-            className="flex items-center justify-center rounded-full bg-ink text-sun"
+            className="flex items-center justify-center rounded-full bg-on-truth text-truth"
             style={{ width: s.av, height: s.av }}
           >
-            <CheckIcon size={s.av * 0.55} />
+            <TruthSeal size={s.av * 0.55} />
           </span>
           <span className="flex-1 tracking-[0.08em] uppercase">{uk.correctAnswer}</span>
           <span className="opacity-90">{uk.correctBonus(pointsCorrect)}</span>
         </div>
         <div className={`flex items-center ${s.gap} ${s.pad}`}>
-          <Letter letter={card.letter} scale={scale} tone="ink" />
+          <Letter letter={card.letter} scale={scale} tone="truth" />
           <span className={`flex-1 leading-tight font-extrabold ${s.text}`}>{card.text}</span>
           {voteBlock}
         </div>
@@ -150,14 +152,14 @@ export function AnswerCard({
             <Avatar avatar={author.avatar} size={s.av} style={{ background: 'var(--color-cream)' }} />
           ) : null}
           <span className={`flex-1 ${author ? '' : 'text-cream'}`}>
-            {uk.fakeBy} {author ? author.name : uk.leftGame}
+            {uk.fakeBy(author ? author.name : uk.leftGame)}
             {own && ` (${uk.yourAnswer.toLowerCase()})`}
           </span>
           {author && (
             <span
-              className={`flex items-center rounded-full bg-ink px-2.5 font-display font-extrabold text-sun ${scale === 'tv' ? 'h-11 text-2xl' : 'h-7 text-sm'}`}
+              className={`flex items-center gap-1 rounded-full bg-ink px-2.5 font-display font-extrabold text-sun ${scale === 'tv' ? 'h-11 text-2xl' : 'h-7 text-sm'}`}
             >
-              +{gain}
+              <PointsIcon size={scale === 'tv' ? 20 : 11} />+{gain}
             </span>
           )}
         </div>

@@ -9,13 +9,22 @@
   --color-fog: #b8aac8;
   --color-sun: #ffc83d;
   --color-sun-shade: #c7901a;
+  --color-sun-hover: #ffe08a;
   --color-ember: #3a2e2c;
   --color-coral: #ff6b57;
   --color-ink: #1a1206;
   --color-pit: #0e0a13;
+  /* the correct answer; same as sun in the base theme, ghost-white at Halloween */
+  --color-truth: #ffc83d;
+  --color-truth-shade: #c7901a;
+  --color-on-truth: #1a1206;
+  /* the running timer ring */
+  --color-timer: #fff4e8;
 
   --font-sans: 'Manrope', 'Segoe UI', system-ui, sans-serif;
   --font-display: 'Unbounded', 'Arial Black', sans-serif;
+  /* logo and big headings only; questions, answers, names and numbers stay on display */
+  --font-logo: 'Unbounded', 'Arial Black', sans-serif;
   --font-emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
 
   --radius-tag: 8px;
@@ -90,6 +99,32 @@
   }
 }
 
+/* Halloween edition: same components, different tokens (see haloween-theme.html, "гайд теми") */
+[data-theme='halloween'] {
+  --color-night: #140e22;
+  --color-dusk: #1f1733;
+  --color-velvet: #2a2044;
+  --color-edge: #3d2f5e;
+  --color-cream: #f6f1ff;
+  --color-fog: #b5a8d6;
+  --color-sun: #ff8a1f;
+  --color-sun-shade: #c2560a;
+  --color-sun-hover: #ffb066;
+  --color-ember: #3a2536;
+  --color-coral: #ff5c8a;
+  --color-ink: #1e1208;
+  --color-pit: #0c0816;
+  --color-truth: #f6f1ff;
+  --color-truth-shade: #8e7cc0;
+  --color-on-truth: #1a1030;
+  --color-timer: #ff8a1f;
+  --font-logo: 'Rubik Wet Paint', 'Unbounded', 'Arial Black', sans-serif;
+}
+/* unlayered, so it beats the font-weight utilities: Rubik Wet Paint has a single weight */
+[data-theme='halloween'] .font-logo {
+  font-weight: 400;
+}
+
 @layer base {
   html,
   body,
@@ -155,6 +190,116 @@
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Halloween motion ── */
+@keyframes vfloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--r, 0deg));
+  }
+  50% {
+    transform: translateY(-10px) rotate(var(--r, 0deg));
+  }
+}
+@keyframes vflap {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(-8deg);
+  }
+  50% {
+    transform: translate(18px, -10px) rotate(4deg);
+  }
+}
+@keyframes vswing {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+@keyframes vpeek {
+  0%,
+  100% {
+    transform: translateY(0) rotate(12deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(8deg);
+  }
+}
+/* the mask leaves the author's card: from the card centre up and to the right */
+@keyframes vunmask {
+  from {
+    transform: translate(-520px, 150px) rotate(0) scale(0.7);
+  }
+  to {
+    transform: translate(0, 0) rotate(24deg) scale(1);
+  }
+}
+/* candle-like halo; --drop keeps the card's own base shadow */
+@keyframes vglow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 6px rgb(246 241 255 / 0.12),
+      0 0 36px rgb(180 140 255 / 0.45),
+      var(--drop, 0 0 0 transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgb(246 241 255 / 0.16),
+      0 0 52px rgb(180 140 255 / 0.7),
+      var(--drop, 0 0 0 transparent);
+  }
+}
+@keyframes vpulse-sway {
+  0%,
+  100% {
+    transform: scale(1) rotate(0);
+  }
+  25% {
+    transform: scale(1.04) rotate(-3deg);
+  }
+  50% {
+    transform: scale(1.07) rotate(0);
+  }
+  75% {
+    transform: scale(1.04) rotate(3deg);
+  }
+}
+@keyframes vcandy {
+  from {
+    transform: translateY(-80px) rotate(0);
+  }
+  to {
+    transform: translateY(1160px) rotate(540deg);
+  }
+}
+[data-theme='halloween'] .truth-glow {
+  animation: vglow 2s ease-in-out infinite;
+}
+[data-theme='halloween'] .lobby-float {
+  animation: vfloat 3.2s ease-in-out infinite;
+}
+[data-theme='halloween'] .animate-pulse-timer {
+  animation-name: vpulse-sway;
+}
+
+/* the record keeps its angle when the music stops */
+@keyframes vspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.vinyl-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: vspin 2.4s linear infinite;
+}
+.vinyl-spin.is-paused {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {

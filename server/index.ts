@@ -6,12 +6,14 @@ import path from 'node:path';
 import { existsSync } from 'node:fs';
 import { Server, type Socket } from 'socket.io';
 import type { ClientToServer, ServerToClient } from '../shared/events.ts';
-import { AVATARS, type GameState, type Role } from '../shared/types.ts';
+import { AVATARS, resolveTheme, type GameState, type Role } from '../shared/types.ts';
 import { GameError, initialState, reduce, validatePreset, type GameAction } from './game.ts';
 import { buildView } from './views.ts';
 import { deletePreset, loadPresets, upsertPreset } from './presets.ts';
 import { restoreState, snapshotState } from './persistence.ts';
 import { createPhaseTimer } from './timer.ts';
+import { applyMusic, isScreenMusicStatus, musicView } from './music.ts';
+import { DEFAULT_MUSIC, type MusicSettings, type ScreenMusicStatus } from '../shared/music.ts';
 
 const PORT = Number(process.env.PORT ?? 3000);
 const PROD = process.env.NODE_ENV === 'production';
@@ -20,6 +22,9 @@ const CLIENT_PORT = Number(process.env.CLIENT_PORT ?? (PROD ? PORT : 5173));
 
 const lanIp = findLanIp();
 const joinUrl = `http://${lanIp}:${CLIENT_PORT}/play`;
+// YouTube refuses some embeds on pages opened by a bare IP, so the TV uses the network name;
+// phones keep the IP, Android doesn't reliably resolve .local
+const screenUrl = `http://${lanName() ?? lanIp}:${CLIENT_PORT}/screen`;
 
 const app = express();
 const httpServer = createServer(app);
@@ -30,11 +35,18 @@ const io = new Server<ClientToServer, ServerToClient, Record<string, never>, Soc
 interface SocketData {
   role?: Role;
   playerId?: string;
+  /** screens only: what their music player is doing */
+  music?: ScreenMusicStatus;
 }
 
 let state: GameState = restoreState() ?? initialState();
+// snapshots from before themes existed
+state.theme ??= 'auto';
 // nobody is connected right after a (re)start
 for (const p of state.players) p.connected = false;
+
+// not part of the game: it keeps playing across new games and cancels, and resets with the server
+let music: MusicSettings = { ...DEFAULT_MUSIC };
 
 const timer = createPhaseTimer(() => dispatch({ type: 'timerEnd' }));
 
@@ -70,6 +82,7 @@ function broadcast(): void {
     'freeAvatars',
     AVATARS.map((_, i) => i).filter((i) => !taken.has(i)),
   );
+  io.emit('theme', resolveTheme(state.theme, new Date()));
 }
 
 function sendState(
@@ -79,6 +92,16 @@ function sendState(
   const role = s.data.role;
   if (!role) return;
   s.emit('state', buildView(state, role, { now, joinUrl, playerId: s.data.playerId }));
+}
+
+/** Music goes to the host and the screens only; phones stay silent. */
+function broadcastMusic(): void {
+  const sockets = [...io.sockets.sockets.values()];
+  const view = musicView(
+    music,
+    sockets.filter((s) => s.data.role === 'screen').map((s) => s.data.music),
+  );
+  for (const s of sockets) if (s.data.role === 'host' || s.data.role === 'screen') s.emit('music', view);
 }
 
 /** Reports an error to the client: game rule errors verbatim, everything else generic. */
@@ -94,6 +117,13 @@ io.on('connection', (socket) => {
     if (role !== 'host' && role !== 'screen') return;
     socket.data.role = role;
     sendState(socket);
+    broadcastMusic();
+  });
+
+  socket.on('music:status', (status) => {
+    if (!isScreenMusicStatus(status) || status === socket.data.music) return;
+    socket.data.music = status;
+    if (socket.data.role === 'screen') broadcastMusic();
   });
 
   socket.on('player:join', async ({ name, avatar }, ack) => {
@@ -158,6 +188,9 @@ io.on('connection', (socket) => {
         if (!preset) throw new GameError('Набір питань не знайдено');
         validatePreset(preset);
         dispatch({ type: 'createGame', preset, settings: a.settings });
+      } else if (a.type === 'setMusic') {
+        music = applyMusic(music, a.music ?? {});
+        broadcastMusic();
       } else {
         dispatch(a);
       }
@@ -193,6 +226,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    if (socket.data.role === 'screen') broadcastMusic();
     const pid = socket.data.playerId;
     if (!pid) return;
     const stillHere = [...io.sockets.sockets.values()].some((s) => s !== socket && s.data.playerId === pid);
@@ -204,6 +238,7 @@ io.on('connection', (socket) => {
     'freeAvatars',
     AVATARS.map((_, i) => i).filter((i) => !taken.has(i)),
   );
+  socket.emit('theme', resolveTheme(state.theme, new Date()));
 });
 
 function requirePlayer(
@@ -215,7 +250,7 @@ function requirePlayer(
 }
 
 app.get('/api/info', (_req, res) => {
-  res.json({ joinUrl });
+  res.json({ joinUrl, screenUrl });
 });
 
 const distDir = path.resolve(import.meta.dirname, '../dist');
@@ -232,9 +267,16 @@ httpServer.listen(PORT, '0.0.0.0', () => {
   const base = `http://${lanIp}:${CLIENT_PORT}`;
   console.log(`\n  Варіанти запущено`);
   console.log(`  Ведучий:  ${base}/host`);
-  console.log(`  Екран:    ${base}/screen`);
+  console.log(`  Екран:    ${screenUrl}`);
   console.log(`  Гравці:   ${joinUrl}\n`);
 });
+
+/** The Mac's Bonjour name (e.g. my-mac.local), or null where .local names aren't a given. */
+function lanName(): string | null {
+  if (process.platform !== 'darwin') return null;
+  const h = os.hostname();
+  return h.endsWith('.local') ? h : `${h}.local`;
+}
 
 function findLanIp(): string {
   const candidates: string[] = [];

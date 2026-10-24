@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
-import { AVATARS, type PublicPlayer } from '../../shared/types.ts';
+import type { PublicPlayer } from '../../shared/types.ts';
 import { uk } from '../i18n/uk.ts';
+import { avatarLook, useTheme } from '../lib/theme.ts';
 import { CheckIcon, OfflineIcon, XIcon } from './icons.tsx';
 
 export function Avatar({
@@ -19,7 +20,7 @@ export function Avatar({
   className?: string;
   style?: CSSProperties;
 }) {
-  const a = AVATARS[avatar] ?? AVATARS[0];
+  const a = avatarLook(avatar, useTheme());
   return (
     <span
       aria-hidden="true"

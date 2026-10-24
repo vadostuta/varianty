@@ -1,4 +1,4 @@
-import type { Phase } from '../../shared/types.ts';
+import type { Phase, Theme } from '../../shared/types.ts';
 
 /** Ukrainian plural: 1 бал, 2–4 бали, 5+ балів (11–14 → балів). */
 export function plural(n: number, one: string, few: string, many: string): string {
@@ -13,7 +13,7 @@ export function plural(n: number, one: string, few: string, many: string): strin
 export const points = (n: number) => `${n} ${plural(n, 'бал', 'бали', 'балів')}`;
 export const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 
-export const uk = {
+const base = {
   tagline: 'Вигадай. Обдури. Вгадай правду.',
   progress: (round: number, q: number) => `Раунд ${round + 1} · Питання ${q + 1}/5`,
   phase: {
@@ -34,7 +34,7 @@ export const uk = {
   nobodyBelieved: 'Ніхто не повірив',
   correctAnswer: 'Правильна відповідь',
   correctBonus: (p: number) => `+${p} кожному, хто вгадав`,
-  fakeBy: 'Вигадка:',
+  fakeBy: (name: string) => `Вигадка: ${name}`,
   leftGame: 'гравець вибув',
   yourAnswer: 'Твоя відповідь',
   yourVote: 'Твій голос',
@@ -93,14 +93,17 @@ export const uk = {
     waitingHost: 'Ведучий готує гру',
     joinHere: 'Заходь з телефона',
     noPlayersYet: 'Поки нікого. Скануй QR-код!',
+    whoBelieved: 'Хто повірив?',
+    believed: (n: number) => plural(n, 'Повірив', 'Повірили', 'Повірили'),
     discuss: 'Час обговорити!',
     voteNow: 'Голосуйте на телефонах',
-    results: 'Хто кого обдурив?',
+    results: (_stage: 'pending' | 'voters' | 'author', _truth: boolean) => 'Хто кого обдурив?',
     scoreboard: 'Рахунок',
     roundOver: (r: number) => `Раунд ${r + 1} завершено`,
     round2Soon: 'Раунд 2 скоро',
     gameOver: 'Фінал!',
     paused: 'Пауза',
+    pausedHint: '',
     titleLiar: 'Головний брехун',
     titleSage: 'Знавець',
     titleLiarHint: (n: number) => `${n} ${plural(n, 'людина повірила', 'людини повірили', 'людей повірили')}`,
@@ -152,6 +155,23 @@ export const uk = {
     openScreen: 'Відкрити екран для ТВ',
     votedFor: 'голосів',
     noPresets: 'Немає жодного повного набору. Створи його в «Набори питань».',
+    theme: 'Тема гри',
+    themeSeason: 'до 3 листопада',
+  },
+
+  music: {
+    title: 'Музика',
+    station: 'Що грає',
+    volume: 'Гучність',
+    turnOn: 'Увімкнути музику',
+    turnOff: 'Вимкнути музику',
+    off: 'Вимкнено. Грає на екрані для ТВ',
+    noScreen: 'Відкрий екран для ТВ — музика грає там',
+    loading: 'Вмикаємо…',
+    playing: 'Грає на ТВ',
+    blocked: 'Браузер ТВ чекає на клік: натисни будь-де на екрані',
+    error: 'Це відео не грає. Обери інше',
+    tapToPlay: 'Натисни будь-де, щоб увімкнути музику',
   },
 
   presets: {
@@ -186,3 +206,44 @@ export const uk = {
     generic: 'Щось пішло не так',
   },
 };
+
+export type Copy = typeof base;
+
+/** Halloween edition: only the lines that change (see haloween-theme.html, "Тексти, що змінюються"). */
+const halloween: Copy = {
+  ...base,
+  tagline: 'Вигадай. Замаскуй. Зірви маски.',
+  timer: { ...base.timer, up: 'Бу!' },
+  fakeBy: (name) => `Під маскою — ${name}!`,
+  play: {
+    ...base.play,
+    avatarLabel: 'Обери маску',
+    answerPlaceholder: 'Вигадай моторошно переконливу відповідь…',
+    discuss: 'Час пошепотітися! 🤫',
+    vote: 'Хто тут без маски?',
+    voteHint: 'Обери правдиву відповідь. Твоєї тут немає.',
+  },
+  screen: {
+    ...base.screen,
+    waitingHost: 'Збираємо всю нечисть…',
+    discuss: 'Час пошепотітися!',
+    whoBelieved: 'Хто потрапив у пастку?',
+    believed: () => 'У пастці',
+    results: (stage, truth) =>
+      stage !== 'author' ? 'Хто потрапив у пастку?' : truth ? 'Правда виходить з тіні…' : 'Маски геть!',
+    scoreboard: 'Мішок цукерок',
+    pausedHint: 'Привиди теж відпочивають',
+    titleLiar: 'Майстер масок',
+    titleSage: 'Бачить крізь маски',
+  },
+};
+
+/**
+ * The current theme's texts. A live binding: setCopy swaps it and the app re-renders from the
+ * root (see useTheme in App), so call sites just read `uk.…`.
+ */
+export let uk: Copy = base;
+
+export function setCopy(theme: Theme): void {
+  uk = theme === 'halloween' ? halloween : base;
+}

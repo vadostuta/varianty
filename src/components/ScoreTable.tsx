@@ -3,6 +3,7 @@ import type { PublicPlayer } from '../../shared/types.ts';
 import { signed } from '../i18n/uk.ts';
 import { Avatar } from './Avatar.tsx';
 import { CrownIcon } from './icons.tsx';
+import { PointsIcon } from './decor.tsx';
 
 /** Counts from `from` to `to` after `delay` ms. */
 function useCountUp(from: number, to: number, delay: number, duration = 700) {
@@ -154,9 +155,10 @@ function ScoreRow({
         <span />
       ) : d > 0 ? (
         <span
-          className={`flex items-center justify-self-end rounded-full bg-sun font-display font-extrabold text-ink ${s.delta} ${animate ? 'animate-pop' : ''}`}
+          className={`flex items-center gap-1 justify-self-end rounded-full bg-sun font-display font-extrabold text-ink ${s.delta} ${animate ? 'animate-pop' : ''}`}
           style={{ animationDelay: animate ? `${delay}ms` : undefined }}
         >
+          {scale === 'tv' && <PointsIcon size={16} />}
           {signed(d)}
         </span>
       ) : (

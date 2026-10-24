@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALL_VOTED_GRACE_MS, initialState, normalizeAnswer, reduce } from '../server/game.ts';
 import { buildView } from '../server/views.ts';
 import { makeGame, preset } from './helpers.ts';
-import { DEFAULT_SETTINGS } from '../shared/types.ts';
+import { DEFAULT_SETTINGS, resolveTheme, seasonalTheme } from '../shared/types.ts';
 
 const W = DEFAULT_SETTINGS.writingSeconds * 1000;
 const V = DEFAULT_SETTINGS.votingSeconds * 1000;
@@ -193,5 +193,27 @@ describe('game flow', () => {
     g.act({ type: 'kick', playerId: 'p1' });
     expect(g.state.players.map((p) => p.id)).toEqual(['p0', 'p2']);
     expect(g.state.votes.p1).toBeUndefined();
+  });
+});
+
+describe('theme', () => {
+  it('follows the calendar on auto: 15 Oct – 3 Nov is Halloween', () => {
+    expect(seasonalTheme(new Date(2026, 9, 14))).toBe('base');
+    expect(seasonalTheme(new Date(2026, 9, 15))).toBe('halloween');
+    expect(seasonalTheme(new Date(2026, 10, 3, 23, 59))).toBe('halloween');
+    expect(seasonalTheme(new Date(2026, 10, 4))).toBe('base');
+    expect(resolveTheme('base', new Date(2026, 9, 31))).toBe('base');
+  });
+
+  it('can be switched in any phase and survives a new game and a cancel', () => {
+    const g = playToVoting();
+    g.act({ type: 'setTheme', theme: 'halloween' });
+    expect(g.state.theme).toBe('halloween');
+    g.act({ type: 'abort' });
+    expect(g.state.theme).toBe('halloween');
+    g.act({ type: 'createGame', preset, settings: DEFAULT_SETTINGS });
+    g.act({ type: 'newGame' });
+    expect(g.state.theme).toBe('halloween');
+    expect(() => g.act({ type: 'setTheme', theme: 'xmas' as 'base' })).toThrow();
   });
 });

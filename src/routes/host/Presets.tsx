@@ -60,7 +60,7 @@ export function Presets() {
     <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-8">
       <Link
         to="/host"
-        className="flex w-fit items-center gap-1.5 font-extrabold text-sun hover:text-[#FFE08A]"
+        className="flex w-fit items-center gap-1.5 font-extrabold text-sun hover:text-sun-hover"
       >
         <BackIcon /> {uk.presets.back}
       </Link>
@@ -176,7 +176,7 @@ function Editor({
       <button
         type="button"
         onClick={onClose}
-        className="flex w-fit items-center gap-1.5 font-extrabold text-sun hover:text-[#FFE08A]"
+        className="flex w-fit items-center gap-1.5 font-extrabold text-sun hover:text-sun-hover"
       >
         <BackIcon /> {uk.presets.title}
       </button>

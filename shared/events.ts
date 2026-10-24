@@ -1,4 +1,5 @@
-import type { Preset, Settings, View } from './types.ts';
+import type { MusicSettings, MusicView, ScreenMusicStatus } from './music.ts';
+import type { Preset, Settings, Theme, ThemeChoice, View } from './types.ts';
 
 export type Ack<T = object> = (res: ({ ok: true } & T) | { ok: false; error: string }) => void;
 
@@ -13,7 +14,9 @@ export type HostAction =
   | { type: 'next' }
   | { type: 'kick'; playerId: string }
   | { type: 'abort' }
-  | { type: 'newGame' };
+  | { type: 'newGame' }
+  | { type: 'setTheme'; theme: ThemeChoice }
+  | { type: 'setMusic'; music: Partial<MusicSettings> };
 
 export interface ClientToServer {
   hello: (role: 'host' | 'screen') => void;
@@ -28,6 +31,8 @@ export interface ClientToServer {
   'presets:list': (ack: Ack<{ presets: Preset[] }>) => void;
   'presets:save': (p: Preset, ack: Ack<{ preset: Preset }>) => void;
   'presets:delete': (id: string, ack: Ack) => void;
+  /** a TV screen reporting what its player is doing */
+  'music:status': (status: ScreenMusicStatus) => void;
 }
 
 export interface ServerToClient {
@@ -35,4 +40,8 @@ export interface ServerToClient {
   kicked: (reason: 'kicked' | 'aborted') => void;
   /** lobby avatars still free, for the join screen */
   freeAvatars: (avatars: number[]) => void;
+  /** sent to every socket, joined or not, so the join screen is themed too */
+  theme: (theme: Theme) => void;
+  /** to the host and screens: what to play, and whether a TV is actually playing it */
+  music: (m: MusicView) => void;
 }

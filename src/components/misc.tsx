@@ -1,30 +1,50 @@
 import { useEffect, useId, useMemo, useRef, type ReactNode } from 'react';
 import QRCode from 'qrcode';
-import { MAX_ANSWER_LEN, QUESTIONS_PER_ROUND, ROUNDS } from '../../shared/types.ts';
+import { MAX_ANSWER_LEN, QUESTIONS_PER_ROUND, ROUNDS, type Theme } from '../../shared/types.ts';
 import { uk } from '../i18n/uk.ts';
+import { useTheme } from '../lib/theme.ts';
 import { Button } from './Button.tsx';
 import { CheckIcon } from './icons.tsx';
 
-const LOGO = [
-  ['В', '#FF8A3D', -4, 0],
-  ['а', '#5AB0FF', 3, -8],
-  ['р', '#9BE15D', -2, 0],
-  ['і', '#B48CFF', 4, -5],
-  ['а', '#FF6FB5', -3, 0],
-  ['н', '#3DD6D0', 2, -8],
-  ['т', '#FFC83D', -4, 0],
-  ['и', '#FF8A3D', 3, -3],
-] as const;
+const LOGO: Record<Theme, (readonly [string, string, number, number])[]> = {
+  base: [
+    ['В', '#FF8A3D', -4, 0],
+    ['а', '#5AB0FF', 3, -8],
+    ['р', '#9BE15D', -2, 0],
+    ['і', '#B48CFF', 4, -5],
+    ['а', '#FF6FB5', -3, 0],
+    ['н', '#3DD6D0', 2, -8],
+    ['т', '#FFC83D', -4, 0],
+    ['и', '#FF8A3D', 3, -3],
+  ],
+  halloween: [
+    ['В', '#FF8A1F', -4, 0],
+    ['а', '#F6F1FF', 3, -8],
+    ['р', '#9BEA5A', -2, 0],
+    ['і', '#B48CFF', 4, -5],
+    ['а', '#FF5C8A', -3, 0],
+    ['н', '#FF8A1F', 2, -8],
+    ['т', '#F6F1FF', -4, 0],
+    ['и', '#9BEA5A', 3, -3],
+  ],
+};
 
-export function Logo({ size = 112 }: { size?: number }) {
+/** `theme` forces a look regardless of the page's theme (the host's theme picker previews). */
+export function Logo({ size = 112, theme: forced }: { size?: number; theme?: Theme }) {
+  const current = useTheme();
+  const theme = forced ?? current;
+  const font = forced && {
+    fontFamily: forced === 'halloween' ? "'Rubik Wet Paint', sans-serif" : "'Unbounded', sans-serif",
+    fontWeight: forced === 'halloween' ? 400 : 900,
+  };
   return (
     <div
       role="img"
       aria-label="Варіанти"
-      className="flex items-end font-display leading-none font-black tracking-[-0.02em]"
-      style={{ fontSize: size }}
+      className="flex items-end font-logo leading-none font-black tracking-[-0.02em]"
+      style={{ fontSize: size, ...font }}
     >
-      {LOGO.map(([ch, color, rot, y], i) => (
+      {LOGO[theme].map(([ch, color, rot, y], i) => (
         <span
           key={i}
           aria-hidden="true"
@@ -106,7 +126,7 @@ export function Progress({
                 style={{
                   width: dot * 1.57,
                   height: dot * 1.57,
-                  boxShadow: `0 0 0 ${4 * scale}px rgba(255,200,61,.25)`,
+                  boxShadow: `0 0 0 ${4 * scale}px color-mix(in srgb, var(--color-sun) 25%, transparent)`,
                 }}
               />
             ) : (
@@ -141,7 +161,7 @@ export function QRCodeSvg({ text, size = 152 }: { text: string; size?: number })
       viewBox={`0 0 ${path.n} ${path.n}`}
       shapeRendering="crispEdges"
     >
-      <path fill="#1A1206" d={path.d} />
+      <path fill="var(--color-ink)" d={path.d} />
     </svg>
   );
 }
@@ -217,7 +237,7 @@ export function AnswerInput({
         onChange={(e) => onChange(e.target.value.replace(/\n/g, ' '))}
         placeholder={uk.play.answerPlaceholder}
         aria-describedby={`${id}-count`}
-        className="w-full resize-none rounded-phone border-2 border-edge bg-velvet px-4 py-3.5 text-lg leading-snug font-bold text-cream outline-none placeholder:text-fog/70 focus:border-sun focus:shadow-[0_0_0_4px_rgba(255,200,61,.2)]"
+        className="w-full resize-none rounded-phone border-2 border-edge bg-velvet px-4 py-3.5 text-lg leading-snug font-bold text-cream outline-none placeholder:text-fog/70 focus:border-sun focus:shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-sun)_20%,transparent)]"
       />
       <span
         id={`${id}-count`}

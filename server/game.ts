@@ -10,6 +10,7 @@ import {
   type GameState,
   type Preset,
   type Settings,
+  type ThemeChoice,
 } from '../shared/types.ts';
 import { buildResultSteps, computeResults } from './scoring.ts';
 
@@ -27,6 +28,7 @@ export type GameAction =
   | { type: 'kick'; playerId: string }
   | { type: 'abort' }
   | { type: 'newGame' }
+  | { type: 'setTheme'; theme: ThemeChoice }
   | { type: 'join'; id: string; token: string; name: string; avatar: number | null }
   | { type: 'setConnected'; playerId: string; connected: boolean }
   | { type: 'answer'; playerId: string; text: string }
@@ -55,6 +57,7 @@ export function initialState(): GameState {
     timer: null,
     seq: 0,
     shuffleSeed: 0,
+    theme: 'auto',
   };
 }
 
@@ -170,13 +173,18 @@ export function reduce(
       return s;
     }
     case 'abort': {
-      return initialState();
+      return { ...initialState(), theme: s.theme };
     }
     case 'newGame': {
       need('GAME_END', 'LOBBY');
       const players = s.players;
       for (const p of players) resetPlayer(p);
-      return { ...initialState(), players, settings: s.settings, presetId: s.presetId };
+      return { ...initialState(), players, settings: s.settings, presetId: s.presetId, theme: s.theme };
+    }
+    case 'setTheme': {
+      if (!['auto', 'base', 'halloween'].includes(action.theme)) throw new GameError('Невідома тема');
+      s.theme = action.theme;
+      return s;
     }
     case 'join': {
       const name = action.name.replace(/\s+/g, ' ').trim().slice(0, MAX_NAME_LEN);

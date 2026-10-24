@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import type { PublicPlayer, View, ViewCard } from '../../../shared/types.ts';
 import { Avatar, VoteStack } from '../../components/Avatar.tsx';
 import { AnswerCard } from '../../components/AnswerCard.tsx';
-import { CheckIcon } from '../../components/icons.tsx';
-import { plural, uk } from '../../i18n/uk.ts';
+import { Mask, Spooky, TruthSeal } from '../../components/decor.tsx';
+import { uk } from '../../i18n/uk.ts';
 import { TvFrame } from './Screen.tsx';
 
 /**
@@ -22,7 +22,9 @@ export function Results({ view }: { view: View }) {
       view={view}
       right={
         <div className="flex flex-col items-end gap-2">
-          <h1 className="font-display text-[56px] leading-none font-extrabold">{uk.screen.results}</h1>
+          <h1 className="font-logo text-[56px] leading-none font-extrabold">
+            {uk.screen.results(r.focusStage ?? 'pending', focus?.authorId === null)}
+          </h1>
           {focus && (
             <span className="text-[26px] font-extrabold tracking-[0.1em] text-fog uppercase">
               {uk.screen.cardOf(k, view.cards.length)}
@@ -86,14 +88,13 @@ function Spotlight({
 
   const believed = voters.length ? (
     <span className="block text-[30px] text-fog">
-      {plural(voters.length, 'Повірив', 'Повірили', 'Повірили')}:{' '}
-      <b className="text-cream">{names.join(', ')}</b>
+      {uk.screen.believed(voters.length)}: <b className="text-cream">{names.join(', ')}</b>
     </span>
   ) : null;
 
   let caption: React.ReactNode;
   if (stage === 'pending') {
-    caption = <span className="text-fog">Хто повірив?</span>;
+    caption = <span className="text-fog">{uk.screen.whoBelieved}</span>;
   } else if (stage === 'voters' || !flipped) {
     caption = believed ?? <span className="text-fog">{uk.nobodyBelieved}</span>;
   } else if (card.authorId === null) {
@@ -124,7 +125,16 @@ function Spotlight({
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="relative flex flex-col gap-8">
+      {flipped && typeof card.authorId === 'string' && (
+        <Spooky>
+          <Mask
+            width={230}
+            className="absolute -top-[110px] right-[40px] z-10"
+            style={{ transform: 'rotate(24deg)', animation: 'vunmask 600ms var(--ease-spring) both' }}
+          />
+        </Spooky>
+      )}
       <div className={`flip animate-pop ${flipped ? 'is-flipped' : ''}`}>
         <div className="flip-inner">
           <div className="flip-front">
@@ -184,12 +194,12 @@ function MiniCard({
   return (
     <li
       className={`flex items-center gap-4 rounded-[20px] px-4 py-3 transition-all duration-300 ${
-        isCorrect ? 'bg-sun text-ink' : card.revealed ? 'bg-velvet' : 'bg-dusk text-cream/80'
+        isCorrect ? 'bg-truth text-on-truth' : card.revealed ? 'bg-velvet' : 'bg-dusk text-cream/80'
       } ${focused ? 'scale-[1.03] shadow-[inset_0_0_0_3px_var(--color-sun),0_0_0_4px_var(--color-night)]' : ''}`}
     >
       <span
         className={`flex size-11 flex-none items-center justify-center rounded-xl font-display text-xl font-extrabold ${
-          isCorrect ? 'bg-ink text-sun' : 'bg-edge'
+          isCorrect ? 'bg-on-truth text-truth' : 'bg-edge'
         }`}
       >
         {card.letter}
@@ -202,9 +212,9 @@ function MiniCard({
             <span
               role="img"
               aria-label={uk.correctAnswer}
-              className="flex size-10 items-center justify-center rounded-full bg-ink text-sun"
+              className="flex size-10 items-center justify-center rounded-full bg-on-truth text-truth"
             >
-              <CheckIcon size={22} />
+              <TruthSeal size={22} />
             </span>
           ) : author ? (
             <Avatar avatar={author.avatar} size={40} />

@@ -10,6 +10,8 @@ import { CheckIcon, LockIcon, PauseIcon, PlayIcon } from '../../components/icons
 import { uk } from '../../i18n/uk.ts';
 import { getSocket, request } from '../../lib/socket.ts';
 import { useCountdown } from '../../lib/useCountdown.ts';
+import { MusicPanel } from './MusicPanel.tsx';
+import { useScreenUrl } from '../../lib/screenUrl.ts';
 
 function useHostAction() {
   const [error, setError] = useState('');
@@ -29,6 +31,8 @@ export function HostControl({ view }: { view: View }) {
   const { run, error, busy } = useHostAction();
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [kickTarget, setKickTarget] = useState<PublicPlayer | null>(null);
+  const [musicError, setMusicError] = useState('');
+  const screenUrl = useScreenUrl();
   const players = useMemo(() => new Map(view.players.map((p) => [p.id, p])), [view.players]);
   const inQuestion = !['LOBBY', 'ROUND_END', 'GAME_END'].includes(view.phase);
 
@@ -42,10 +46,10 @@ export function HostControl({ view }: { view: View }) {
         <span className="text-sm font-bold text-fog">{view.presetName}</span>
         <span className="ml-auto flex items-center gap-4">
           <a
-            href="/screen"
+            href={screenUrl}
             target="_blank"
             rel="noreferrer"
-            className="hidden text-sm font-extrabold text-sun hover:text-[#FFE08A] sm:inline"
+            className="hidden text-sm font-extrabold text-sun hover:text-sun-hover sm:inline"
           >
             {uk.host.openScreen} ↗
           </a>
@@ -63,6 +67,12 @@ export function HostControl({ view }: { view: View }) {
         <aside className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
           <ActionPanel view={view} run={run} busy={busy} error={error} />
           <PlayersPanel view={view} onKick={setKickTarget} />
+          <MusicPanel compact onError={setMusicError} />
+          {musicError && (
+            <p role="alert" className="-mt-3 text-sm font-bold text-coral">
+              {musicError}
+            </p>
+          )}
         </aside>
       </main>
 
@@ -222,12 +232,12 @@ function HostCardRow({
   const correct = card.authorId === null;
   return (
     <li
-      className={`flex items-center gap-3 rounded-host px-3 py-2.5 ${correct ? 'bg-sun text-ink' : 'bg-velvet'} ${
+      className={`flex items-center gap-3 rounded-host px-3 py-2.5 ${correct ? 'bg-truth text-on-truth' : 'bg-velvet'} ${
         focused ? 'outline-3 outline-offset-2 outline-sun' : ''
       }`}
     >
       <span
-        className={`flex size-8 flex-none items-center justify-center rounded-[10px] font-display text-sm font-extrabold ${correct ? 'bg-ink text-sun' : 'bg-edge'}`}
+        className={`flex size-8 flex-none items-center justify-center rounded-[10px] font-display text-sm font-extrabold ${correct ? 'bg-on-truth text-truth' : 'bg-edge'}`}
       >
         {card.letter}
       </span>
@@ -242,7 +252,7 @@ function HostCardRow({
           voterIds={card.voters}
           players={players}
           size={26}
-          ring={correct ? 'var(--color-sun)' : 'var(--color-velvet)'}
+          ring={correct ? 'var(--color-truth)' : 'var(--color-velvet)'}
         />
       )}
       <span className="flex w-28 flex-none items-center justify-end gap-2 text-sm font-extrabold">
