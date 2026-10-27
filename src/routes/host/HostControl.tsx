@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import type { HostAction } from '../../../shared/events.ts';
-import type { PublicPlayer, View, ViewCard } from '../../../shared/types.ts';
+import { HOST_LIE, type PublicPlayer, type View, type ViewCard } from '../../../shared/types.ts';
 import { Avatar, PlayerChip, VoteStack } from '../../components/Avatar.tsx';
 import { Button } from '../../components/Button.tsx';
 import { ScoreTable } from '../../components/ScoreTable.tsx';
@@ -124,6 +124,14 @@ function QuestionPanel({ view }: { view: View }) {
             {uk.host.correctAnswer} · {uk.host.hostOnly}
           </span>
           <span className="text-lg font-extrabold">{view.host?.correctAnswer}</span>
+          {view.host?.lieAnswer && (
+            <div className="mt-2 flex flex-col gap-0.5 border-t border-sun/30 pt-2">
+              <span className="text-xs font-extrabold tracking-[0.1em] text-coral uppercase">
+                🤥 {uk.host.lieAnswer}
+              </span>
+              <span className="text-lg font-extrabold">{view.host.lieAnswer}</span>
+            </div>
+          )}
           {view.host?.explanation && (
             <div className="mt-2 flex flex-col gap-0.5 border-t border-sun/30 pt-2">
               <span className="text-xs font-extrabold tracking-[0.1em] text-sun uppercase">
@@ -230,9 +238,10 @@ function HostCardRow({
 }) {
   const author = card.authorId ? players.get(card.authorId) : undefined;
   const correct = card.authorId === null;
+  const lie = card.authorId === HOST_LIE;
   return (
     <li
-      className={`flex items-center gap-3 rounded-host px-3 py-2.5 ${correct ? 'bg-truth text-on-truth' : 'bg-velvet'} ${
+      className={`flex items-center gap-3 rounded-host px-3 py-2.5 ${correct ? 'bg-truth text-on-truth' : lie ? 'bg-velvet shadow-[inset_0_0_0_2px_var(--color-coral)]' : 'bg-velvet'} ${
         focused ? 'outline-3 outline-offset-2 outline-sun' : ''
       }`}
     >
@@ -260,6 +269,8 @@ function HostCardRow({
           <>
             <CheckIcon size={16} /> {uk.correctAnswer.split(' ')[0]}
           </>
+        ) : lie ? (
+          <span className="truncate text-coral">🤥 {uk.hostLie}</span>
         ) : author ? (
           <>
             <span className="truncate">{author.name}</span>
@@ -333,7 +344,9 @@ function ActionPanel({
                   ? uk.host.previewVoters(card.letter)
                   : card.authorId === null
                     ? uk.host.previewCorrect(card.letter)
-                    : uk.host.previewAuthor(card.letter)}
+                    : card.authorId === HOST_LIE
+                      ? uk.host.previewLie(card.letter)
+                      : uk.host.previewAuthor(card.letter)}
             </b>
           </span>
           <StepDots total={r.total} shown={r.shown} />

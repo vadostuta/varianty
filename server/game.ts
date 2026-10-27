@@ -1,6 +1,7 @@
 import {
   AVATARS,
   DEFAULT_SETTINGS,
+  HOST_LIE,
   MAX_ANSWER_LEN,
   MAX_NAME_LEN,
   MAX_PLAYERS,
@@ -311,6 +312,9 @@ const LETTERS = 'АБВГДЕЄЖЗИІКЛМН';
 export function buildCards(s: GameState): Card[] {
   const q = s.questions[s.round][s.qIndex];
   const cards: Omit<Card, 'id' | 'letter'>[] = [{ text: q.correctAnswer.trim(), authorId: null }];
+  // optional chaining: a game restored from before lies existed has none
+  const lie = q.lieAnswer?.trim();
+  if (lie) cards.push({ text: lie, authorId: HOST_LIE });
   for (const p of s.players) {
     const text = s.answers[p.id];
     if (text) cards.push({ text, authorId: p.id });
@@ -330,8 +334,8 @@ export function validatePreset(p: Preset): void {
   for (const r of p.rounds) {
     if (r.length !== QUESTIONS_PER_ROUND) throw new GameError('Потрібно по 5 питань у раунді');
     for (const q of r) {
-      if (!q.question.trim() || !q.correctAnswer.trim())
-        throw new GameError('Заповни всі питання й правильні відповіді');
+      if (!q.question.trim() || !q.correctAnswer.trim() || !q.lieAnswer?.trim())
+        throw new GameError('Заповни всі питання, правильні відповіді й брехню ведучого');
     }
   }
 }
@@ -346,6 +350,7 @@ export function sanitizeSettings(x: Settings): Settings {
     votingSeconds: int(x.votingSeconds, 10, 600, DEFAULT_SETTINGS.votingSeconds),
     pointsCorrect: int(x.pointsCorrect, 0, 10, DEFAULT_SETTINGS.pointsCorrect),
     pointsFooled: int(x.pointsFooled, 0, 10, DEFAULT_SETTINGS.pointsFooled),
+    pointsLie: int(x.pointsLie, 0, 10, DEFAULT_SETTINGS.pointsLie),
   };
 }
 

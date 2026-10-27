@@ -6,7 +6,11 @@ export const preset: Preset = {
   name: 'Тест',
   updatedAt: 0,
   rounds: [0, 1].map((r) =>
-    [0, 1, 2, 3, 4].map((q) => ({ question: `Питання ${r}.${q}`, correctAnswer: `Правда ${r}.${q}` })),
+    [0, 1, 2, 3, 4].map((q) => ({
+      question: `Питання ${r}.${q}`,
+      correctAnswer: `Правда ${r}.${q}`,
+      lieAnswer: `Брехня ${r}.${q}`,
+    })),
   ),
 };
 

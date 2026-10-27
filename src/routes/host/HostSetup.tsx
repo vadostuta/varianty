@@ -168,6 +168,14 @@ export function HostSetup({ view }: { view: View }) {
                 min={0}
                 max={10}
               />
+              <NumberField
+                label={uk.host.pointsLie}
+                prefix="−"
+                value={settings.pointsLie}
+                onChange={set('pointsLie')}
+                min={0}
+                max={10}
+              />
             </div>
           </section>
           <MusicPanel onError={setError} />

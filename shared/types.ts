@@ -20,6 +20,8 @@ export interface Settings {
   votingSeconds: number;
   pointsCorrect: number;
   pointsFooled: number;
+  /** taken from anyone who votes for the host's lie */
+  pointsLie: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -27,11 +29,14 @@ export const DEFAULT_SETTINGS: Settings = {
   votingSeconds: 30,
   pointsCorrect: 2,
   pointsFooled: 1,
+  pointsLie: 2,
 };
 
 export interface PresetQuestion {
   question: string;
   correctAnswer: string;
+  /** the host's own fake; voting for it costs settings.pointsLie */
+  lieAnswer: string;
   /** optional; shown only to the host, for when players ask "why?" */
   explanation?: string;
 }
@@ -58,6 +63,9 @@ export function seasonalTheme(date: Date): Theme {
 export function resolveTheme(choice: ThemeChoice, date: Date): Theme {
   return choice === 'auto' ? seasonalTheme(date) : choice;
 }
+
+/** Card.authorId of the host's lie. Player ids are UUIDs, so it can't clash. */
+export const HOST_LIE = 'host-lie';
 
 /** Player colour + avatar slot; index into AVATARS. */
 export interface Avatar {
@@ -95,13 +103,15 @@ export interface Card {
   id: string;
   letter: string;
   text: string;
-  /** null = the host's correct answer */
+  /** null = the host's correct answer, HOST_LIE = the host's lie, otherwise a player id */
   authorId: string | null;
 }
 
 export interface PlayerResult {
   delta: number;
   guessedCorrect: boolean;
+  /** voted for the host's lie */
+  fellForLie: boolean;
   /** ids of players who voted for this player's card */
   fooled: string[];
   answered: boolean;
@@ -173,7 +183,7 @@ export interface ViewCard {
   /** present once revealed (or always for the host after writing) */
   revealed?: 'voters' | 'author';
   voters?: string[];
-  /** undefined = hidden, null = correct answer, string = author player id */
+  /** undefined = hidden, null = correct answer, HOST_LIE = host's lie, string = author player id */
   authorId?: string | null;
 }
 
@@ -204,6 +214,7 @@ export interface View {
   host?: {
     presetId: string | null;
     correctAnswer: string | null;
+    lieAnswer: string | null;
     explanation: string | null;
     answers: { playerId: string; text: string }[];
     /** what the next "Далі" press reveals in RESULTS */

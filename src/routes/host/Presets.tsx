@@ -152,7 +152,12 @@ function Editor({
   const [busy, setBusy] = useState(false);
   const missing = missingFields(p);
 
-  const update = (r: number, q: number, field: 'question' | 'correctAnswer' | 'explanation', value: string) =>
+  const update = (
+    r: number,
+    q: number,
+    field: 'question' | 'correctAnswer' | 'lieAnswer' | 'explanation',
+    value: string,
+  ) =>
     setP((prev) => {
       const next = structuredClone(prev);
       next.rounds[r][q][field] = value;
@@ -193,7 +198,10 @@ function Editor({
           <h2 className="font-display text-xl font-bold">{uk.presets.round(r)}</h2>
           <ol className="flex flex-col gap-4">
             {round.map((item, q) => (
-              <li key={q} className="grid gap-3 md:grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1fr)]">
+              <li
+                key={q}
+                className="grid gap-3 md:grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]"
+              >
                 <span className="pt-8 font-display text-lg font-bold text-fog max-md:pt-0">{q + 1}</span>
                 <Field
                   label={uk.presets.question}
@@ -208,11 +216,18 @@ function Editor({
                   error={touched && !item.correctAnswer.trim() ? uk.presets.needAnswer : ''}
                 />
                 <Field
+                  label={uk.presets.lie}
+                  value={item.lieAnswer ?? ''}
+                  placeholder={uk.presets.liePlaceholder}
+                  onChange={(v) => update(r, q, 'lieAnswer', v)}
+                  error={touched && !item.lieAnswer?.trim() ? uk.presets.needLie : ''}
+                />
+                <Field
                   label={uk.presets.explanation}
                   value={item.explanation ?? ''}
                   placeholder={uk.presets.explanationPlaceholder}
                   onChange={(v) => update(r, q, 'explanation', v)}
-                  className="md:col-span-2 md:col-start-2"
+                  className="md:col-span-3 md:col-start-2"
                   multiline
                 />
               </li>

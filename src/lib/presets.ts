@@ -7,7 +7,7 @@ export async function fetchPresets(): Promise<Preset[]> {
   return res.presets;
 }
 
-/** Number of empty question/answer fields (0 = ready to play). */
+/** Number of empty question/answer/lie fields (0 = ready to play). */
 export function missingFields(p: Preset): number {
   let n = 0;
   for (let r = 0; r < ROUNDS; r++) {
@@ -15,6 +15,7 @@ export function missingFields(p: Preset): number {
       const item = p.rounds[r]?.[q];
       if (!item?.question.trim()) n++;
       if (!item?.correctAnswer.trim()) n++;
+      if (!item?.lieAnswer?.trim()) n++;
     }
   }
   return n;
@@ -29,6 +30,7 @@ export function emptyPreset(): Preset {
       Array.from({ length: QUESTIONS_PER_ROUND }, () => ({
         question: '',
         correctAnswer: '',
+        lieAnswer: '',
         explanation: '',
       })),
     ),

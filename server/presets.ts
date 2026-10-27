@@ -32,6 +32,7 @@ export async function upsertPreset(input: Preset): Promise<Preset> {
       r.map((q) => ({
         question: q.question.trim(),
         correctAnswer: q.correctAnswer.trim(),
+        lieAnswer: q.lieAnswer?.trim() ?? '',
         explanation: q.explanation?.trim() ?? '',
       })),
     ),

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { PublicPlayer, View, ViewCard } from '../../../shared/types.ts';
+import { HOST_LIE, type PublicPlayer, type View, type ViewCard } from '../../../shared/types.ts';
 import { Avatar, VoteStack } from '../../components/Avatar.tsx';
 import { AnswerCard } from '../../components/AnswerCard.tsx';
 import { Mask, Spooky, TruthSeal } from '../../components/decor.tsx';
@@ -8,7 +8,8 @@ import { TvFrame } from './Screen.tsx';
 
 /**
  * T5: the host steps through the cards. Per card: (1) the card is spotlit, (2) voters' avatars
- * drop onto it, (3) it flips to show the author or the correct-answer seal. Correct card is last.
+ * drop onto it, (3) it flips to show the author or the correct-answer seal. The host's lie comes
+ * second to last, the correct card last.
  */
 export function Results({ view }: { view: View }) {
   const players = useMemo(() => new Map(view.players.map((p) => [p.id, p])), [view.players]);
@@ -44,6 +45,7 @@ export function Results({ view }: { view: View }) {
               players={players}
               pointsCorrect={view.settings.pointsCorrect}
               pointsFooled={view.settings.pointsFooled}
+              pointsLie={view.settings.pointsLie}
             />
           )}
         </div>
@@ -63,12 +65,14 @@ function Spotlight({
   players,
   pointsCorrect,
   pointsFooled,
+  pointsLie,
 }: {
   card: ViewCard;
   stage: 'pending' | 'voters' | 'author';
   players: Map<string, PublicPlayer>;
   pointsCorrect: number;
   pointsFooled: number;
+  pointsLie: number;
 }) {
   // mount unflipped, then flip, so a card revealed in a single step still turns over
   const [flipped, setFlipped] = useState(false);
@@ -107,6 +111,15 @@ function Spotlight({
       </>
     ) : (
       <span className="text-sun">Правду не знайшов ніхто 😱</span>
+    );
+  } else if (card.authorId === HOST_LIE) {
+    caption = voters.length ? (
+      <>
+        {believed}
+        <span className="text-coral">{uk.screen.lieCaught(pointsLie)}</span>
+      </>
+    ) : (
+      <span className="text-fog">{uk.screen.lieDodged}</span>
     );
   } else {
     // "отримує" keeps the sentence gender-neutral
@@ -153,6 +166,7 @@ function Spotlight({
               scale="tv"
               pointsCorrect={pointsCorrect}
               pointsFooled={pointsFooled}
+              pointsLie={pointsLie}
               hideVoters
             />
           </div>
@@ -191,6 +205,7 @@ function MiniCard({
 }) {
   const author = typeof card.authorId === 'string' ? players.get(card.authorId) : undefined;
   const isCorrect = card.authorId === null;
+  const isLie = card.authorId === HOST_LIE;
   return (
     <li
       className={`flex items-center gap-4 rounded-[20px] px-4 py-3 transition-all duration-300 ${
@@ -215,6 +230,14 @@ function MiniCard({
               className="flex size-10 items-center justify-center rounded-full bg-on-truth text-truth"
             >
               <TruthSeal size={22} />
+            </span>
+          ) : isLie ? (
+            <span
+              role="img"
+              aria-label={uk.hostLie}
+              className="flex size-10 items-center justify-center rounded-full bg-coral font-emoji text-[22px]"
+            >
+              🤥
             </span>
           ) : author ? (
             <Avatar avatar={author.avatar} size={40} />

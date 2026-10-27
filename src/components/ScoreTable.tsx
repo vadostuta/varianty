@@ -161,6 +161,13 @@ function ScoreRow({
           {scale === 'tv' && <PointsIcon size={16} />}
           {signed(d)}
         </span>
+      ) : d < 0 ? (
+        <span
+          className={`flex items-center justify-self-end rounded-full bg-coral font-display font-extrabold text-ink ${s.delta} ${animate ? 'animate-pop' : ''}`}
+          style={{ animationDelay: animate ? `${delay}ms` : undefined }}
+        >
+          {signed(d)}
+        </span>
       ) : (
         <span
           className={`flex items-center justify-self-end rounded-full border-2 border-edge font-display font-bold text-fog ${s.delta}`}

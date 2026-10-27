@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALL_VOTED_GRACE_MS, initialState, normalizeAnswer, reduce } from '../server/game.ts';
 import { buildView } from '../server/views.ts';
 import { makeGame, preset } from './helpers.ts';
-import { DEFAULT_SETTINGS, resolveTheme, seasonalTheme } from '../shared/types.ts';
+import { DEFAULT_SETTINGS, HOST_LIE, resolveTheme, seasonalTheme } from '../shared/types.ts';
 
 const W = DEFAULT_SETTINGS.writingSeconds * 1000;
 const V = DEFAULT_SETTINGS.votingSeconds * 1000;
@@ -36,6 +36,14 @@ describe('lobby', () => {
     expect(() =>
       reduce(initialState(), { type: 'createGame', preset: bad, settings: DEFAULT_SETTINGS }, 0),
     ).toThrow();
+  });
+
+  it('refuses a preset without the host lie', () => {
+    const bad = structuredClone(preset);
+    bad.rounds[0][2].lieAnswer = '';
+    expect(() =>
+      reduce(initialState(), { type: 'createGame', preset: bad, settings: DEFAULT_SETTINGS }, 0),
+    ).toThrow('брехню');
   });
 });
 
@@ -78,12 +86,13 @@ describe('writing', () => {
     expect(g.state.timer?.endsAt).toBe(g.now + W + 5_000);
   });
 
-  it('builds one card per answer plus the correct one, no answer = no card', () => {
+  it('builds one card per answer plus the correct one and the lie, no answer = no card', () => {
     const g = playToVoting();
-    expect(g.state.cards).toHaveLength(3);
+    expect(g.state.cards).toHaveLength(4);
     expect(g.state.cards.filter((c) => c.authorId === null)).toHaveLength(1);
+    expect(g.state.cards.find((c) => c.authorId === HOST_LIE)?.text).toBe('Брехня 0.0');
     expect(g.state.cards.find((c) => c.authorId === 'p0')?.text).toBe('Пити вино з полином');
-    expect(g.state.cards.map((c) => c.letter)).toEqual(['А', 'Б', 'В']);
+    expect(g.state.cards.map((c) => c.letter)).toEqual(['А', 'Б', 'В', 'Г']);
   });
 });
 
@@ -112,9 +121,10 @@ describe('voting', () => {
     g.act({ type: 'vote', playerId: 'p2', cardId: g.cardOf('p0') });
     g.act({ type: 'finishPhase' });
     expect(g.state.phase).toBe('RESULTS');
-    // p1's card: no votes (1 step); p0's card: voters + author; correct: voters + author
-    expect(g.state.resultSteps).toHaveLength(5);
-    for (let i = 0; i < 5; i++) g.act({ type: 'next' });
+    // p1's card: no votes (1 step); p0's card: voters + author; lie: no votes (1 step);
+    // correct: voters + author
+    expect(g.state.resultSteps).toHaveLength(6);
+    for (let i = 0; i < 6; i++) g.act({ type: 'next' });
     expect(g.state.phase).toBe('RESULTS');
     expect(g.state.players.every((p) => p.score === 0)).toBe(true);
     g.act({ type: 'next' });
@@ -122,6 +132,19 @@ describe('voting', () => {
     const score = Object.fromEntries(g.state.players.map((p) => [p.id, p.score]));
     expect(score).toEqual({ p0: 4, p1: 0, p2: 0 });
     expect(g.state.players[0]).toMatchObject({ timesFooledOthers: 2, correctGuesses: 1 });
+  });
+
+  it('takes points from whoever votes for the host lie', () => {
+    const g = playToVoting();
+    g.act({ type: 'vote', playerId: 'p0', cardId: g.cardOf(HOST_LIE) });
+    g.act({ type: 'vote', playerId: 'p1', cardId: g.cardOf(null) });
+    g.act({ type: 'finishPhase' });
+    const lieSteps = g.state.resultSteps.filter((s) => s.cardId === g.cardOf(HOST_LIE));
+    expect(lieSteps.map((s) => s.stage)).toEqual(['voters', 'author']);
+    while (g.state.phase === 'RESULTS') g.act({ type: 'next' });
+    const score = Object.fromEntries(g.state.players.map((p) => [p.id, p.score]));
+    expect(score).toEqual({ p0: -2, p1: 2, p2: 0 });
+    expect(g.state.results.p0).toMatchObject({ fellForLie: true, guessedCorrect: false });
   });
 });
 
@@ -137,6 +160,10 @@ describe('privacy', () => {
     expect(player.cards.every((c) => c.authorId === undefined)).toBe(true);
     const host = buildView(g.state, 'host', opts);
     expect(host.host?.correctAnswer).toBe('Правда 0.0');
+    expect(host.host?.lieAnswer).toBe('Брехня 0.0');
+    expect(host.cards.some((c) => c.authorId === HOST_LIE)).toBe(true);
+    expect(screen.cards.some((c) => c.authorId === HOST_LIE)).toBe(false);
+    expect(player.cards.some((c) => c.authorId === HOST_LIE)).toBe(false);
     expect(host.cards.some((c) => c.authorId === null)).toBe(true);
     expect(JSON.stringify(screen)).not.toContain('"t0"');
   });

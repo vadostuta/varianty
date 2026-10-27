@@ -1,4 +1,4 @@
-import { AVATARS, type PublicPlayer, type ViewCard } from '../../shared/types.ts';
+import { AVATARS, HOST_LIE, type PublicPlayer, type ViewCard } from '../../shared/types.ts';
 import { uk } from '../i18n/uk.ts';
 import { Avatar, VoteStack } from './Avatar.tsx';
 import { CheckIcon } from './icons.tsx';
@@ -56,7 +56,8 @@ function Letter({
 
 /**
  * One answer card in any state. States differ by shape too (dashed = yours, frame + tick = selected,
- * header strip = revealed author, sun fill + seal = correct), never by colour alone.
+ * header strip = revealed author, sun fill + seal = correct, coral strip + 🤥 = host's lie), never by
+ * colour alone.
  */
 export function AnswerCard({
   card,
@@ -68,6 +69,7 @@ export function AnswerCard({
   onSelect,
   pointsFooled = 1,
   pointsCorrect = 2,
+  pointsLie = 2,
   highlight = false,
   animateVotes = false,
   hideVoters = false,
@@ -81,6 +83,7 @@ export function AnswerCard({
   onSelect?: () => void;
   pointsFooled?: number;
   pointsCorrect?: number;
+  pointsLie?: number;
   highlight?: boolean;
   animateVotes?: boolean;
   hideVoters?: boolean;
@@ -129,6 +132,33 @@ export function AnswerCard({
         <div className={`flex items-center ${s.gap} ${s.pad}`}>
           <Letter letter={card.letter} scale={scale} tone="truth" />
           <span className={`flex-1 leading-tight font-extrabold ${s.text}`}>{card.text}</span>
+          {voteBlock}
+        </div>
+      </div>
+    );
+  }
+
+  // revealed: the host's lie
+  if (card.authorId === HOST_LIE) {
+    return (
+      <div
+        className={`overflow-hidden bg-velvet ${s.radius} ${ring}`}
+        style={{ boxShadow: `${s.shadow} rgba(0,0,0,.35)` }}
+      >
+        <div className={`flex items-center gap-2.5 bg-coral font-extrabold text-ink ${s.head}`}>
+          <span
+            aria-hidden="true"
+            className="flex flex-none items-center justify-center rounded-full bg-cream font-emoji"
+            style={{ width: s.av, height: s.av, fontSize: s.av * 0.6 }}
+          >
+            🤥
+          </span>
+          <span className="flex-1">{uk.hostLie}</span>
+          <span className="opacity-90">{uk.liePenalty(pointsLie)}</span>
+        </div>
+        <div className={`flex items-center ${s.gap} ${s.pad}`}>
+          <Letter letter={card.letter} scale={scale} tone="plain" />
+          <span className={`flex-1 leading-tight font-bold ${s.text}`}>{card.text}</span>
           {voteBlock}
         </div>
       </div>

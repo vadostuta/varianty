@@ -81,6 +81,7 @@ export function buildView(
     view.host = {
       presetId: s.presetId,
       correctAnswer: q?.correctAnswer ?? null,
+      lieAnswer: q?.lieAnswer || null,
       explanation: q?.explanation || null,
       answers: s.players
         .filter((p) => s.answers[p.id])

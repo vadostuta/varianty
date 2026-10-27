@@ -502,7 +502,7 @@ function MyResult({ view, me }: { view: View; me: PublicPlayer }) {
       <section className="flex flex-col items-center gap-2 py-4 text-center">
         <Label>{uk.play.thisQuestion}</Label>
         <span
-          className={`animate-pop font-display text-7xl font-extrabold ${r && r.delta > 0 ? 'text-sun' : 'text-fog'}`}
+          className={`animate-pop font-display text-7xl font-extrabold ${r && r.delta > 0 ? 'text-sun' : r && r.delta < 0 ? 'text-coral' : 'text-fog'}`}
         >
           {signed(r?.delta ?? 0)}
         </span>
@@ -516,13 +516,22 @@ function MyResult({ view, me }: { view: View; me: PublicPlayer }) {
             aria-hidden="true"
             className={`flex size-10 flex-none items-center justify-center rounded-full font-emoji text-xl ${r?.guessedCorrect ? 'bg-on-truth text-truth' : 'bg-edge'}`}
           >
-            {r?.guessedCorrect ? <TruthSeal size={20} /> : r?.voted ? '🙈' : '🤐'}
+            {r?.guessedCorrect ? <TruthSeal size={20} /> : r?.fellForLie ? '🤥' : r?.voted ? '🙈' : '🤐'}
           </span>
           <span className="flex-1 text-lg font-extrabold">
-            {r?.guessedCorrect ? uk.play.guessedTitle : r?.voted ? uk.play.missed : uk.play.noVote}
+            {r?.guessedCorrect
+              ? uk.play.guessedTitle
+              : r?.fellForLie
+                ? uk.play.fellForLie
+                : r?.voted
+                  ? uk.play.missed
+                  : uk.play.noVote}
           </span>
           {r?.guessedCorrect && (
             <span className="font-display text-xl font-extrabold">+{s.pointsCorrect}</span>
+          )}
+          {r?.fellForLie && s.pointsLie > 0 && (
+            <span className="font-display text-xl font-extrabold text-coral">−{s.pointsLie}</span>
           )}
         </li>
 
