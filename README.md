@@ -1,5 +1,7 @@
 # Варіанти (Varianty)
 
+![Варіанти — TV screen, player phones and host remote in the Halloween theme](docs/hero.jpg)
+
 > This README is in two languages: **[English](#english)** · **[Українська](#ukrainian)**
 >
 > Цей README написаний двома мовами: **[English](#english)** · **[Українська](#ukrainian)**
