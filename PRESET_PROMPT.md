@@ -15,7 +15,7 @@ For every question:
 1. **Writing (≈60 s):** the TV shows a question with a surprising real answer. Players don't know the answer, so each one types a **fake answer** that sounds believable or funny (max 80 characters).
 2. **Reveal:** every fake answer and the one real answer are shuffled and shown as cards (A, B, C…). People read them out and laugh.
 3. **Voting (≈30 s):** each player votes for the card they think is true. They can't vote for their own card.
-4. **Results:** a voter who picks the real answer gets **+2**. A player whose fake gets votes earns **+1 per vote**.
+4. **Results:** a voter who picks the real answer gets **+2**. A player whose fake gets votes earns **+1 per vote**. Among the cards there is also one **host's lie** (from the preset); a voter who picks it **loses 2**.
 5. The host can read an optional **explanation** (only the host sees it) when someone asks "wait, is that really true?"
 
 A preset has **2 rounds × 5 questions = 10 questions**.
@@ -34,11 +34,11 @@ Return a JSON array of preset objects. It must be valid JSON that can be appende
     "updatedAt": 0,
     "rounds": [
       [
-        { "question": "…", "correctAnswer": "…", "explanation": "…" },
-        { "question": "…", "correctAnswer": "…", "explanation": "…" },
-        { "question": "…", "correctAnswer": "…", "explanation": "…" },
-        { "question": "…", "correctAnswer": "…", "explanation": "…" },
-        { "question": "…", "correctAnswer": "…", "explanation": "…" }
+        { "question": "…", "correctAnswer": "…", "lieAnswer": "…", "explanation": "…" },
+        { "question": "…", "correctAnswer": "…", "lieAnswer": "…", "explanation": "…" },
+        { "question": "…", "correctAnswer": "…", "lieAnswer": "…", "explanation": "…" },
+        { "question": "…", "correctAnswer": "…", "lieAnswer": "…", "explanation": "…" },
+        { "question": "…", "correctAnswer": "…", "lieAnswer": "…", "explanation": "…" }
       ],
       [ /* 5 more questions */ ]
     ]
@@ -49,7 +49,7 @@ Return a JSON array of preset objects. It must be valid JSON that can be appende
 Hard rules:
 - Exactly **2 rounds**, and exactly **5 questions** in each round.
 - `id` must be unique, lowercase Latin with hyphens.
-- `question` and `correctAnswer` must not be empty. `explanation` may be `""`, but fill it in whenever you can.
+- `question`, `correctAnswer` and `lieAnswer` must not be empty. `explanation` may be `""`, but fill it in whenever you can.
 - Use the typographic apostrophe consistently (`'` is fine) and «ялинки» quotes for quotations.
 
 ## How to write a good question
@@ -73,6 +73,13 @@ Hard rules:
 - **Surprising but not random:** after the reveal, people should react with "no way… but that actually makes sense". Funny, absurd, slightly rude or awkward answers work best (see «Покакати», «Сечу», «Імпотент»).
 - **Avoid bare numbers** such as «Три» or «116 років». Players just type other numbers and nobody laughs. One per preset at most.
 - **Avoid well-known facts** like "the Hundred Years' War didn't last 100 years". If a quiz regular would know it, swap it out.
+
+### The host's lie
+
+`lieAnswer` is a fake written by the host. It is shuffled in with the players' fakes, and anyone who votes for it loses points, so it should be the most tempting wrong card:
+- **False.** Double-check it isn't accidentally true.
+- **Written the same way as the real answer:** same length, same grammatical form, same tone. It must fit the end of the question just as well.
+- **Believable rather than funny.** Players will write the funny fakes; the lie is the trap for people who play it safe.
 
 ### The explanation (host only)
 
@@ -114,6 +121,7 @@ Hard rules:
 {
   "question": "У 1990-х роках у Північній Кореї всі вчителі перед отриманням права викладати мали довести, що вміють…",
   "correctAnswer": "Грати на акордеоні",
+  "lieAnswer": "Стріляти з гвинтівки",
   "explanation": "Акордеон був інструментом пропаганди: легкий і мобільний, тож учитель міг будь-де заграти патріотичну пісню з учнями."
 }
 ```
@@ -122,6 +130,7 @@ Hard rules:
 {
   "question": "Тигри та леви можуть годинами тертися об дерево, на якому є…",
   "correctAnswer": "Парфуми Calvin Klein",
+  "lieAnswer": "Смола ялівцю",
   "explanation": "Дослідники з Бронкського зоопарку з'ясували, що великі коти реагують на цибетон — синтетичну речовину з мускусним запахом. Тепер деякі фотографи бризкають парфумами місця, щоб зробити гарний кадр."
 }
 ```
